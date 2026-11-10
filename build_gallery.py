@@ -38,7 +38,7 @@ def build():
             delimiter=',',header='azimuth_start_rad,azimuth_end_rad,cos_theta_start,cos_theta_end,antipodal_count',comments='')
         metadata[dataset]['spherical_observations'] = int(counts.sum())
     (output/'metadata.json').write_text(json.dumps(metadata,indent=2),encoding='utf-8')
-    (ROOT/'gallery-data.js').write_text('window.DEM_DATA = '+json.dumps(metadata)+';\n',encoding='utf-8')
+    (ROOT/'gallery-data.js').write_text('window.MFE_DATA = '+json.dumps(metadata)+';\n',encoding='utf-8')
     downloads = ROOT/'downloads'
     downloads.mkdir(exist_ok=True)
     common = ['demviz.py','requirements.txt','README.md','LICENSE-NOTE.md']
@@ -49,7 +49,10 @@ def build():
             for path in (ROOT/folder).iterdir():
                 if path.suffix in ['.py','.txt']:
                     bundle.write(path,path.relative_to(ROOT))
-    with ZipFile(downloads/'dem-visualization-toolkit.zip','w',ZIP_DEFLATED) as bundle:
+    with ZipFile(downloads/'microstructure-fabric-explorer.zip','w',ZIP_DEFLATED) as bundle:
+        # Include example downloads without recursively including this archive.
+        for name in ['force-chain.zip', 'polar-histogram.zip', 'spherical-histogram.zip']:
+            bundle.write(downloads/name, f'downloads/{name}')
         for path in sorted(ROOT.rglob('*')):
             if path.is_file() and not any(part in {'downloads','__pycache__','.git','.venv'} for part in path.relative_to(ROOT).parts):
                 bundle.write(path,path.relative_to(ROOT))

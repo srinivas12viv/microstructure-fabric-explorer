@@ -1,6 +1,8 @@
-# DEM Visualization
+# Microstructure & Fabric Explorer
 
-Three Python tools for exploring discrete element method (DEM) contact networks and contact orientations. Open **index.html** to explore the gallery, locally and offline. Keep `outputs/` beside it: the interactive exports share a local Plotly bundle. 3D interaction requires WebGL. No web server or account is needed.
+Three Python tools for exploring contact networks, force transmission, and directional fabric from simulation or experimental data. The supplied examples come from discrete element method (DEM) simulations; experimental inputs must follow the same file schemas and supply the quantities required by each tool. The toolkit visualizes prepared numeric data; extracting contacts or forces from experimental images is outside its scope. Open **index.html** to explore the gallery, locally and offline. Keep `outputs/` beside it: the interactive exports share a local Plotly bundle. 3D interaction requires WebGL. No web server or account is needed.
+
+Suggested GitHub repository name: `microstructure-fabric-explorer`.
 
 ## Setup and reproduce
 

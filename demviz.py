@@ -1,4 +1,4 @@
-"""Reusable, offline DEM visualization tools."""
+"""Reusable, offline microstructure and fabric visualization tools."""
 from pathlib import Path
 import argparse
 import json
@@ -164,7 +164,7 @@ def force_plot(positions_path, contacts_path, destination, max_component_gap=0.1
 
 
 def main(kind):
-    parser = argparse.ArgumentParser(description=f'DEM {kind} visualization')
+    parser = argparse.ArgumentParser(description=f'Microstructure & Fabric Explorer: {kind} visualization')
     if kind == 'force':
         parser.add_argument('--positions',type=Path,default=ROOT/'ForceChain2D/pos.txt')
         parser.add_argument('--contacts',type=Path,default=ROOT/'ForceChain2D/normals.txt')

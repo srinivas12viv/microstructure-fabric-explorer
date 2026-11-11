@@ -6,7 +6,9 @@ Compute particle-void fabric from spherical particle positions and radii:
 
 Voronoi tessellation uses [pyvoro2/Voro++](https://delonecommons.github.io/pyvoro2/).
 Analytic moment integration and fabric statistics are implemented in `main.py`,
-following the approach in Bokkisa's 2019 thesis, section 3.3, and inspired by
+based on Srinivas Vivek Bokkisa's master's thesis,
+[*Fabric evolution in 3D discrete element modelling of soil liquefaction*](https://doi.org/10.14711/thesis-991012752454703412)
+(2019), section 3.3, and inspired by
 [Karambola](https://github.com/morphometry/karambola).
 No contacts, force data, or DEM software are required.
 

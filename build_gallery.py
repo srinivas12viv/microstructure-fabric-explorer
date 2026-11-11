@@ -15,7 +15,7 @@ from demviz import (ROOT, load_normals, polar_stats, spherical_stats, force_plot
 def build():
     output = ROOT/'outputs'
     output.mkdir(exist_ok=True)
-    contact_metadata = run_contacts(Config())
+    contact_metadata = run_contacts(Config(debug_contact_idx=0))
     metadata = {'contacts3d': contact_metadata, 'force': force_plot(ROOT/'ForceChain2D/pos.txt', ROOT/'ForceChain2D/normals.txt', output/'force-chain.png')}
     for dataset in ['Iso', 'Aniso']:
         vectors, forces = load_normals(ROOT/f'PolarHistogram2D/normals_{dataset}.txt')

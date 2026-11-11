@@ -11,6 +11,7 @@ from ContactDetection3D.main import run
 from ContactDetection3D.contact_detection import compute_shell
 from ContactDetection3D.io_utils import load_label_tiff
 from demviz import load_normals, polar_stats, spherical_stats
+from ContactDetection3D.viz import label_surface_quads
 
 
 class ContactTests(unittest.TestCase):
@@ -20,6 +21,21 @@ class ContactTests(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()):
             return run(Config(tiff_path=str(path), out_dir=str(root / "results"),
                               plots=False, **options))
+
+    def test_segmented_surface_preserves_labels_and_axis_order(self):
+        labels = np.zeros((3, 4, 6), dtype=np.uint16)
+        labels[1, 2, 4] = 7
+        labels[1, 2, 5] = 99
+        quads, ids = label_surface_quads(labels)
+        self.assertEqual(quads.shape, (12, 4, 3))
+        self.assertEqual(set(ids), {7, 99})
+        np.testing.assert_array_equal(quads.min(axis=(0, 1)), [4, 2, 1])
+        np.testing.assert_array_equal(quads.max(axis=(0, 1)), [6, 3, 2])
+        quads, ids = label_surface_quads(np.zeros((2, 3, 4), dtype=int))
+        self.assertEqual(quads.shape, (0, 4, 3))
+        self.assertEqual(ids.size, 0)
+        with self.assertRaises(ValueError):
+            label_surface_quads(labels, stride=0)
 
     def test_planar_contact_and_toolkit_export(self):
         labels = np.zeros((8, 8, 8), dtype=np.uint16)

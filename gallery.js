@@ -37,15 +37,5 @@ if (force) byId('force-caption').textContent = `${force.particles.toLocaleString
 updatePolar();
 updateSphere();
 
-const contactViews = {
-  patch: ['typicalContact.svg', 'Supplied contact-patch example: particle surfaces in blue and green; detected contact voxels in red.'],
-  normals: ['centroids_normals.svg', 'Supplied 3D distribution of contact centroids and axial PCA normals.'],
-  coordination: ['histogram.svg', 'Supplied coordination distribution. The original figure reports mean Z = 4.80; see the documentation for averaging conventions.']
-};
-byId('contact-view').addEventListener('change', () => {
-  const [file, caption] = contactViews[byId('contact-view').value];
-  byId('contact-image').src = `ContactDetection3D/out/${file}`;
-  byId('contact-image').alt = caption;
-  byId('contact-open').href = `ContactDetection3D/out/${file}`;
-  byId('contact-caption').textContent = caption;
-});
+const contacts = window.MFE_DATA?.contacts3d;
+if (contacts) byId('contact-summary').textContent = `${contacts.n_particles.toLocaleString()} particles; ${contacts.n_contacts.toLocaleString()} contacts; mean coordination ${contacts.mean_coordination_all.toFixed(2)}.`;

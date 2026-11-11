@@ -183,6 +183,7 @@ def run(cfg: Config):
                np.asarray([(int(pid), Zi.get(int(pid), 0)) for pid in particle_ids], dtype=int).reshape(-1, 2),
                delimiter=",", header="particle_id,coordination", comments="", fmt="%d")
     if cfg.plots:
+        viz.save_segmented_volume(labels, cfg.out_dir, cfg.exclude_labels, show=cfg.show)
         viz.save_overview(centers_mm, normals, [Zi.get(int(pid), 0) for pid in particle_ids],
                           cfg.out_dir, show=cfg.show)
     debug_key = cfg.debug_pair

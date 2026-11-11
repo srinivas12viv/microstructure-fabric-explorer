@@ -2,6 +2,8 @@
 
 Estimate geometric contacts, contact normals, coordination and fabric from a segmented 3D image. Each particle must already have a unique positive integer ID; background is zero by default. This tool does not segment images or measure forces.
 
+It can be used with segmented **3D X-ray micro-CT images of particles with real, irregular shapes**; the contact algorithm makes no spherical shape assumption. The supplied spheres are used for simplicity and validation purposes. Segmentation quality, resolution and the shell settings determine how well geometric contacts represent the imaged material.
+
 ## Install and run
 
 From the toolkit root, with Python 3.10+:
@@ -67,6 +69,7 @@ The current bounding-box remapping uses full-volume integer arrays; large stacks
 | `normals.txt` | Toolkit-compatible whitespace table with one header: `nx ny nz f`; normals reordered to XYZ, `f=1` for every row |
 | `coordination.csv` | `particle_id,coordination`, including isolated particles |
 | `summary.json` | Counts, discarded candidate-pair count, both mean coordinations, settings, calibration and tensors |
+| `segmented-volume.png`, `segmented-volume.html` | Static and rotatable 3D views of the original segmented labels; nearest-neighbor surface sampling every third voxel for display only |
 | `centroids-normals.png` | Contact centroids with symmetric normal segments, axes in mm |
 | `coordination.png` | All-particle coordination distribution |
 | `contact-slices.png`, `contact-voxels.png` | Optional debug figures |
@@ -95,7 +98,9 @@ print(summary["n_contacts"])
 
 ## Supplied figures and legacy results
 
-`out/typicalContact.svg`, `out/centroids_normals.svg` and `out/histogram.svg` are the original figures displayed in `index.html`. `out/Validation_contact_algorithm.pdf` and `.pptx` are supplied supporting slides, not an independent validation performed by this toolkit. Their exact generating settings and calibration were not recorded. Keep historical results separate when comparing new runs.
+The explorer displays four regenerated figures from the same supplied TIFF: the original segmented volume, contact voxel patch, contact centroids/normals, and coordination distribution. `python build_gallery.py` selects retained contact index 0 for the patch view. The volume renderer displays actual voxel boundaries rather than fitting ideal spheres; colors distinguish labels and may repeat. Display sampling can hide features smaller than three voxels; contact analysis always uses full-resolution input. The interactive HTML stores its Plotly bundle alongside it for offline use.
+
+`out/typicalContact.svg`, `out/centroids_normals.svg` and `out/histogram.svg` remain available as original reference figures. `out/Validation_contact_algorithm.pdf` and `.pptx` are supplied supporting slides, not an independent validation performed by this toolkit. Their exact generating settings and calibration were not recorded. Keep historical results separate when comparing new runs.
 
 The old entry script used a two-voxel threshold and could retain collinear PCA patches. This integration defaults to three voxels and filters rank-deficient patches, so regenerated results may differ. The original histogram's ordinate says ?Number of contacts,? although a coordination distribution counts particles; the new plot uses ?Number of particles.? Legacy scripts inside `out/` are preserved reference material, not toolkit entry points; `Contacts_3D.py` additionally needs pandas. Use `main.py` for supported plotting without pandas.
 

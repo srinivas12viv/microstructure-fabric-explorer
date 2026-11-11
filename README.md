@@ -29,7 +29,7 @@ Default paths resolve relative to the code, so scripts also work from a differen
 
 ## Labeled-image contact detection
 
-See [ContactDetection3D/README.md](ContactDetection3D/README.md) for the complete CLI, Python API, output schemas, axis conventions, and limitations. Run `python ContactDetection3D/main.py --help` for options. The gallery features three original SVG figures and links to the supplied validation slides; those historical figures are preserved separately from regenerated outputs.
+See [ContactDetection3D/README.md](ContactDetection3D/README.md) for the complete CLI, Python API, output schemas, axis conventions, and limitations. Run `python ContactDetection3D/main.py --help` for options. The gallery features four regenerated views: the original segmented 3D image (rotatable), a contact voxel patch, contact centroids/normals, and the coordination distribution. Historical figures and validation slides remain preserved separately. The algorithm supports segmented 3D X-ray micro-CT particles with real, irregular shapes; spheres are used in the supplied sample for simplicity and validation purposes.
 
 ```sh
 python ContactDetection3D/main.py --input ContactDetection3D/scp_labeled_N5_ov1.tif --output-dir outputs/my-contacts --voxel-size-mm 1

@@ -247,7 +247,7 @@ def plot_contact_voxel_cubes(
 
     # ---- Plot voxel cubes ----
     fig = plt.figure(figsize=(8, 7))
-    ax = fig.add_subplot(111, projection="3d")
+    ax = fig.add_subplot(111, projection="3d", computed_zorder=False)
 
     # Particle surfaces first (so contact appears on top)
     if np.any(s_pid):
@@ -255,7 +255,12 @@ def plot_contact_voxel_cubes(
     if np.any(s_nid):
         ax.voxels(s_nid.transpose(2, 1, 0), facecolors=(0.0, 1.0, 0.0, float(alpha_particles)), edgecolor=None)  # green
     if np.any(contact_roi):
-        ax.voxels(contact_roi.transpose(2, 1, 0), facecolors=(1.0, 0.0, 0.0, float(alpha_contact)), edgecolor=None)  # red
+        # Deliberately overlay the highlighted patch on transparent surfaces.
+        # Matplotlib's automatic collection ordering otherwise hides coplanar voxels.
+        artists = ax.voxels(contact_roi.transpose(2, 1, 0),
+                            facecolors=(1.0, 0.0, 0.0, float(alpha_contact)), edgecolor=None)
+        for artist in artists.values():
+            artist.set_zorder(10)
 
     ax.set_box_aspect(roi.shape[::-1])
     ax.tick_params(labelsize=8)
@@ -323,3 +328,84 @@ def save_overview(centers, normals, coordination, out_dir, show=False):
     if show:
         plt.show()
     plt.close(fig)
+
+
+def label_surface_quads(labels, exclude_labels=(0,), stride=1):
+    """Return XYZ boundary quads and IDs from a ZYX label array.
+
+    Nearest-neighbor display sampling preserves particle IDs. Faces between
+    different labels are kept for each particle, including touching particles.
+    Coordinates are voxel-edge coordinates in the original image domain.
+    This mesh is for display only; contact detection uses the full resolution.
+    """
+    if not isinstance(stride, int) or stride < 1:
+        raise ValueError("stride must be a positive integer")
+    sampled = labels[::stride, ::stride, ::stride]
+    active = ~np.isin(sampled, exclude_labels)
+    padded = np.pad(sampled, 1, constant_values=0)
+    quads, ids = [], []
+    for axis in range(3):
+        other = [a for a in range(3) if a != axis]
+        for sign in (-1, 1):
+            slices = [slice(1, n + 1) for n in sampled.shape]
+            slices[axis] = slice(1 + sign, sampled.shape[axis] + 1 + sign)
+            boundary = active & (sampled != padded[tuple(slices)])
+            # At volume edges a label of zero can be active if explicitly included.
+            edge = [slice(None)] * 3
+            edge[axis] = 0 if sign == -1 else -1
+            boundary[tuple(edge)] |= active[tuple(edge)]
+            points = np.argwhere(boundary)
+            corners = np.zeros((4, 3), dtype=int)
+            corners[:, axis] = int(sign == 1)
+            corners[:, other[0]] = [0, 1, 1, 0]
+            corners[:, other[1]] = [0, 0, 1, 1]
+            # Reverse corner winding where needed so XYZ face normals point outward.
+            if sign != (-1, 1, -1)[axis]:
+                corners = corners[::-1]
+            vertices = (points[:, None, :] + corners[None, :, :]) * stride
+            vertices = np.minimum(vertices, np.asarray(labels.shape))
+            quads.append(vertices[:, :, ::-1])
+            ids.append(sampled[boundary])
+    return np.concatenate(quads), np.concatenate(ids)
+
+
+def save_segmented_volume(labels, out_dir, exclude_labels=(0,), stride=3, show=False):
+    """Save a static and rotatable view of actual label boundaries, not fitted spheres."""
+    from pathlib import Path
+    from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+    import plotly.graph_objects as go
+    out_dir = Path(out_dir)
+    quads, ids = label_surface_quads(labels, exclude_labels, stride)
+    palette = plt.get_cmap("tab20")
+    unique = np.unique(ids)
+    colors = palette(np.searchsorted(unique, ids) % 20)
+    fig = plt.figure(figsize=(8, 6))
+    ax = fig.add_subplot(projection="3d")
+    if len(quads):
+        ax.add_collection3d(Poly3DCollection(quads, facecolors=colors, linewidths=0, shade=True, rasterized=True))
+    ax.set(xlim=(0, labels.shape[2]), ylim=(0, labels.shape[1]), zlim=(0, labels.shape[0]),
+           xlabel="x (voxels)", ylabel="y (voxels)", zlabel="z (voxels)",
+           title="Segmented input image: particle labels")
+    ax.set_box_aspect(labels.shape[::-1])
+    ax.view_init(elev=24, azim=-55)
+    fig.tight_layout()
+    fig.savefig(out_dir / "segmented-volume.png", dpi=160)
+    if show:
+        plt.show()
+    plt.close(fig)
+    vertices = quads.reshape(-1, 3)
+    base = np.arange(len(quads)) * 4
+    rgb = [f"rgb({int(r*255)},{int(g*255)},{int(b*255)})" for r,g,b,_ in colors]
+    plot = go.Figure(go.Mesh3d(
+        x=vertices[:, 0], y=vertices[:, 1], z=vertices[:, 2],
+        i=np.concatenate([base, base]), j=np.concatenate([base + 1, base + 2]),
+        k=np.concatenate([base + 2, base + 3]), facecolor=rgb + rgb,
+        flatshading=True, hoverinfo="skip", showscale=False,
+        lighting=dict(ambient=0.65, diffuse=0.8, specular=0.1)))
+    plot.update_layout(title="Segmented input: individually labeled particles",
+        margin=dict(l=0, r=0, b=0, t=45), paper_bgcolor="white",
+        scene=dict(aspectmode="data", xaxis_title="x (voxels)",
+                   yaxis_title="y (voxels)", zaxis_title="z (voxels)",
+                   camera=dict(eye=dict(x=1.6, y=-1.8, z=1.2))))
+    plot.write_html(out_dir / "segmented-volume.html", include_plotlyjs="directory",
+                    config=dict(responsive=True, displaylogo=False))

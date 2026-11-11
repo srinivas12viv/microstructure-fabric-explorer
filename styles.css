@@ -3,14 +3,9 @@
 
 .contact-preview{display:block;width:100%;height:480px;object-fit:contain;background:#fff;padding:12px}.contact-tool .tool-links{row-gap:12px}@media(max-width:650px){.contact-preview{height:360px}}
 
-.contact-tool{grid-template-columns:minmax(0,1fr);gap:28px;align-items:start}
-.contact-tool .tool-copy>p,.contact-tool .use-case p{max-width:850px}
-.contact-figures{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
-.contact-figures figure{margin:0;display:flex;flex-direction:column}
-.contact-figures iframe,.contact-figures .contact-preview{height:390px}
-.contact-figures .panel-caption{flex:1;font-size:12px;line-height:1.65}
-.contact-figures .panel-caption strong{color:var(--ink)}
-.contact-notes{font-size:12px;color:var(--muted)}
-.contact-notes p{margin:0 0 10px}.contact-notes a{margin-right:20px}
-@media(max-width:900px){.contact-figures iframe,.contact-figures .contact-preview{height:320px}}
-@media(max-width:650px){.contact-figures{grid-template-columns:minmax(0,1fr)}.contact-figures iframe,.contact-figures .contact-preview{height:360px}}
+/* One output panel, matching the other toolkit examples. */
+.contact-panel [hidden]{display:none}
+.contact-panel .contact-preview{height:480px}
+.contact-panel select{max-width:100%}
+@media(max-width:900px){.contact-panel .contact-preview{height:420px}}
+@media(max-width:650px){.contact-panel .contact-preview{height:425px}}

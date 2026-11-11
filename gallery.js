@@ -39,3 +39,38 @@ updateSphere();
 
 const contacts = window.MFE_DATA?.contacts3d;
 if (contacts) byId('contact-summary').textContent = `${contacts.n_particles.toLocaleString()} particles; ${contacts.n_contacts.toLocaleString()} contacts; mean coordination ${contacts.mean_coordination_all.toFixed(2)}.`;
+
+const contactViews = {
+  volume: {
+    file: 'segmented-volume.html', png: 'segmented-volume.png',
+    caption: 'Original segmented TIFF: colors distinguish particle labels. Drag to rotate and zoom. Surface display samples every third voxel; contact detection uses the full image.'
+  },
+  patch: {
+    file: 'contact-voxels.png',
+    caption: 'Contact voxel patch (retained contact index 0): blue and green show the neighboring particle surfaces; red highlights the contact voxels within the dilation shell.'
+  },
+  normals: {
+    file: 'centroids-normals.png',
+    caption: 'Contact centroids and PCA normals: points locate contacts; symmetric line segments show the axial normal directions used to compute fabric. Normal signs are arbitrary.'
+  },
+  coordination: {
+    file: 'coordination.png',
+    caption: 'Coordination number distribution: the number of retained neighbors per particle. Counts include isolated particles with zero contacts.'
+  }
+};
+function updateContact() {
+  const key = byId('contact-view').value;
+  const view = contactViews[key];
+  const base = 'outputs/contact-detection/';
+  byId('contact-frame').hidden = key !== 'volume';
+  byId('contact-image').hidden = key === 'volume';
+  if (key !== 'volume') {
+    byId('contact-image').src = base + view.file;
+    byId('contact-image').alt = view.caption;
+  }
+  byId('contact-open').href = base + view.file;
+  byId('contact-save').href = base + (view.png || view.file);
+  byId('contact-caption').textContent = view.caption;
+}
+byId('contact-view').addEventListener('change', updateContact);
+updateContact();

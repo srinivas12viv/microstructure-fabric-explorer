@@ -98,7 +98,7 @@ print(summary["n_contacts"])
 
 ## Supplied figures and legacy results
 
-The explorer displays four regenerated figures from the same supplied TIFF: the original segmented volume, contact voxel patch, contact centroids/normals, and coordination distribution. `python build_gallery.py` selects retained contact index 0 for the patch view. The volume renderer displays actual voxel boundaries rather than fitting ideal spheres; colors distinguish labels and may repeat. Display sampling can hide features smaller than three voxels; contact analysis always uses full-resolution input. The interactive HTML stores its Plotly bundle alongside it for offline use.
+The explorer displays four regenerated figures in one compact panel with a view dropdown, from the same supplied TIFF: the original segmented volume, contact voxel patch, contact centroids/normals, and coordination distribution. `python build_gallery.py` selects retained contact index 0 for the patch view. The volume renderer displays actual voxel boundaries rather than fitting ideal spheres; colors distinguish labels and may repeat. Display sampling can hide features smaller than three voxels; contact analysis always uses full-resolution input. The interactive HTML stores its Plotly bundle alongside it for offline use.
 
 `out/typicalContact.svg`, `out/centroids_normals.svg` and `out/histogram.svg` remain available as original reference figures. `out/Validation_contact_algorithm.pdf` and `.pptx` are supplied supporting slides, not an independent validation performed by this toolkit. Their exact generating settings and calibration were not recorded. Keep historical results separate when comparing new runs.
 

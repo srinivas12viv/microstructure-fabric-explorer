@@ -1,60 +1,160 @@
-# Minkowski_w020
+﻿# Minkowski3D
 
-`Minkowski_w020` is a Python tool to compute the Minkowski tensor $W_0^{2,0}$ for large sets of 3D convex cells, such as Voronoi cells in granular packings. The tensor $W_0^{2,0}$ characterizes the volume mass distribution and anisotropy of a convex body and is defined as
+Compute particle-void fabric from spherical particle positions and radii:
 
-$$
-W_0^{2,0} = \int_V \mathbf{r} \otimes \mathbf{r} \,\mathrm{d}V,
-$$
+**Particle geometry -> weighted Voronoi cells -> Minkowski moments -> assembly fabric.**
 
-where $\mathbf{r}$ is the position vector and $V$ is the volume of the cell.
+Voronoi tessellation uses [pyvoro2/Voro++](https://delonecommons.github.io/pyvoro2/).
+Analytic moment integration and fabric statistics are implemented in `main.py`,
+following the approach in Bokkisa's 2019 thesis, section 3.3, and inspired by
+[Karambola](https://github.com/morphometry/karambola).
+No contacts, force data, or DEM software are required.
 
-Minkowski tensors form a family of six independent tensorial shape measures commonly denoted
-$W_0^{2,0}, W_1^{2,0}, W_3^{2,0}, W_1^{0,2}, W_2^{0,2}, \ldots$, each capturing different aspects of the shape of a convex body (Schröder-Turk et al., 2010).
+## Files
 
----
+```text
+Minkowski3D/
+  main.py                 # Tessellation, moments, fabric, exports, and plotting
+  run_example.py          # Run the supplied sample
+  __init__.py             # Python API exports
+  requirements.txt
+  README.md
+  .gitignore
+  example/
+    particles.txt         # 10,000 particles: id x y z radius
+    domain.json           # Sheared periodic domain and units
+```
 
-## Motivation
+## Run the example
 
-[Karambola](https://morphometry.org/software/karambola/) is an open-source C++ code that can compute a full set of Minkowski tensors for 3D bodies and surfaces. However:
+From this folder, with Python 3.10+:
 
-- It requires generating a separate `.poly` file for each convex body.
-- It is most convenient for a small number of cells.
-- Computations become expensive when scaling to $\mathcal{O}(10^4)$ Voronoi cells.
+```sh
+python -m pip install -r requirements.txt
+python run_example.py
+```
 
-`Minkowski_w020` focuses specifically on $W_0^{2,0}$ and is designed to handle **large ensembles of cells** efficiently.
+Open `outputs/preview.html` in a browser with WebGL support. The interactive
+preview shows the packing, one cell and its principal axis, the full axis
+distribution, and the local elongation histogram. Large geometry views are
+sampled; statistics use every particle. Results are generated locally and
+excluded from Git by `.gitignore`.
 
----
+The example contains a thesis packing snapshot with radii and coordinates in
+**mm**. Radii were joined by particle ID before packaging. Its loading stage is
+unspecified. The weighted tessellation was checked against all 10,000 original
+cell volumes: maximum discrepancy was about 5e-6 mm^3, within printed precision.
 
-## Key Features
+The example defaults to **cell-centroid moments**, matching the original
+postprocessing reference. Expected results are approximately:
 
-- **Python implementation**  
-  Written in Python for readability and easy modification or extension by users.
+```text
+Cells: 10000
+Ed: 0.28956483
+Ad: 0.32984239
+```
 
-- **Parallel computation**  
-  Computation of $W_0^{2,0}$ for different cells is mutually independent, so the code uses parallelization to significantly reduce runtime, even for $\sim 10{,}000+$ Voronoi cells.
+For moments about each particle center instead:
 
-- **Direct use of Voro++ outputs**  
-  No need to generate `.poly` files. The code expects:
-  - **Vertices** and
-  - **Faces**  
-  as input, which are standard outputs from [Voro++](http://math.lbl.gov/voro++/) (using custom print options such as `%t` for faces and `%P` for vertices).
+```sh
+python run_example.py --reference particle
+```
 
-- **Flexible reference point**  
-  Includes a `reference_sphere_center` option so that Minkowski tensors can be computed with respect to a specified sphere center, useful for particle–void analyses.
+## Your own data
 
----
+Supply a whitespace-separated particle file with optional exact header:
 
-## Relation to Karambola and Voro++
+```text
+id x y z radius
+42 0.5 0.5 0.5 0.2
+81 1.5 0.5 0.5 0.3
+```
 
-- **Karambola**  
-  `Minkowski_w020` is inspired by the algorithms used in the C++ Karambola code, which can compute all Minkowski tensors for 3D bodies. Here, the focus is narrowed to $W_0^{2,0}$ to allow scaling to large numbers of cells with a simpler workflow.
+Use unique integer IDs, finite positions, positive radii, and consistent length
+units. The domain configuration is separate because positions alone do not
+establish specimen boundaries or periodic shear. For a fully periodic domain,
+write its lattice vectors as rows:
 
-- **Voro++**  
-  Voro++ (Chris Rycroft) is a widely used library to compute Voronoi tessellations around spherical particles. The faces and vertices of each Voronoi cell can be exported using custom formats in Voro++, and these files serve as the direct input to `Minkowski_w020`.
+```json
+{
+  "lattice_vectors": [[2, 0, 0], [-0.2, 2, 0], [0, 0, 2]],
+  "units": "mm",
+  "mode": "power"
+}
+```
 
----
+For an orthorhombic domain, replace `lattice_vectors` with `bounds` containing
+three `[minimum, maximum]` pairs and an explicit `periodic` array such as
+`[true, true, false]`. Mode `power` uses squared radii as weights; `standard`
+selects ordinary Voronoi. Choose a sensible coordinate scale for Voro++
+numerical tolerances.
 
-## Reference
+```sh
+python main.py --input example/particles.txt --domain example/domain.json --reference centroid --output-dir outputs
+```
 
-Schröder-Turk, G. E., Kapfer, S., Breidenbach, B., Beisbart, C., and Mecke, K. (2010).  
-“Tensorial Minkowski functionals and anisotropy measures for planar patterns.” *Journal of Microscopy*, 238(1), 57–74.
+The general CLI defaults to `--reference particle`. Four-column files require
+an explicit `--uniform-radius VALUE`. Relative custom paths resolve from the
+working directory. `run_example.py` locates its bundled sample automatically.
+
+Python API from this folder:
+
+```python
+import json
+from main import load_particles, analyze, save_results
+
+ids, positions, radii = load_particles("example/particles.txt")
+with open("example/domain.json") as stream:
+    domain = json.load(stream)
+result = analyze(ids, positions, radii, domain, reference="centroid")
+save_results(result, "outputs")
+```
+
+## Computation and interpretation
+
+Each closed convex cell is triangulated, its winding is oriented outward,
+and its moments are integrated analytically using tetrahedra. Periodic cells
+remain continuous around their generating sites. Invalid cells and failed
+volume closure cause an error rather than silently dropping particles.
+
+```text
+W020(o) = integral_cell (x-o) outer (x-o) dV
+W_normalized = W020 / radius^5
+beta = lambda_min / lambda_max
+ed = 1 - beta
+Ed = mean(ed)
+v = unit eigenvector of lambda_max
+V = mean(v outer v)
+D = (15/2) (V - I/3)
+Ad = sqrt((3/2) sum_ab D_ab^2)
+```
+
+`Ed` describes average local elongation; `V` and `Ad` describe collective axis
+alignment. Locally elongated cells can have randomly oriented axes. This Ad
+convention has a perfectly aligned limit of **7.5**, not 1.
+
+Physical moments have length^5 units and normalized moments are dimensionless.
+Particle-centered and cell-centroid moments differ by a parallel-axis term.
+The normalized cell describes the full particle environment: the particle's
+volume is not subtracted. It is not an explicit pore-only geometry. The method
+assumes spherical particles; general irregular-particle normalization is outside
+its scope. One snapshot gives static fabric, not deformation history.
+
+When the largest eigenvalues are nearly equal, the principal axis is ambiguous.
+Both the literal all-cell orientation estimator and an explicitly filtered
+estimator are exported, with ambiguity counts. Equal moment eigenvalues do
+not uniquely imply spherical geometry; a cube also has isotropic moments.
+
+## Outputs
+
+| File | Contents |
+| --- | --- |
+| `cells.csv` | IDs, sites, radii, volumes, centroids, beta, ed, eigenvalues, axes, and ambiguity flags |
+| `tensors.npz` | Physical and normalized tensors, input geometry, derived arrays, and metadata; load with `allow_pickle=False` |
+| `fabric.json` | Ed, V, D, Ad, mean beta, units, reference, numerical settings, and volume closure |
+| `principal_axes.txt` | Axis vectors with unit weights, compatible with orientation histograms; weights do not represent forces |
+| `preview.html` | Self-contained interactive visualization |
+
+The implementation has been checked against analytic box and tetrahedron
+moments, reference shifts, rotation/scaling, reversed face winding, fabric
+limits, weighted bisectors, and periodic translations.

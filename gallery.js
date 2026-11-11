@@ -24,7 +24,7 @@ byId('polar-dataset').addEventListener('change', updatePolar);
 byId('polar-plane').addEventListener('change', updatePolar);
 byId('sphere-dataset').addEventListener('change', updateSphere);
 byId('copy-command').addEventListener('click', async () => {
-  const commands = 'python -m pip install -r requirements.txt\npython build_gallery.py\npython ContactDetection3D/main.py\npython PolarHistogram2D/PolarHistogram.py --plane xz --output outputs/my-polar.html';
+  const commands = byId('quickstart').textContent;
   try {
     await navigator.clipboard.writeText(commands);
     byId('copy-status').textContent = 'Commands copied.';
@@ -74,3 +74,34 @@ function updateContact() {
 }
 byId('contact-view').addEventListener('change', updateContact);
 updateContact();
+
+const minkowskiViews = {
+  cell: {file: 'cell.png', caption: 'Actual sample cell: gold shows the particle, teal shows its Voronoi boundary and moment-equivalent ellipsoid, and red marks the principal axis. Coordinates are offsets from the cell centroid.'},
+  packing: {file: 'packing.png', caption: 'All 10,000 particle centers from the sample, colored by radius in mm. The outline shows the sheared periodic domain. Markers represent centers, not rendered sphere surfaces.'},
+  fabric: {file: 'fabric.png', caption: 'Elongation distribution over all 10,000 cells. The gold line marks mean elongation Ed; Ad summarizes alignment of the principal axes.'},
+  workflow: {file: 'workflow.png', caption: 'The complete computation: spherical particle geometry, a weighted Voronoi cell and its moment ellipsoid, then assembly fabric statistics. Every panel comes from the same sample computation.'},
+  interactive: {file: 'preview.html', caption: 'Drag to rotate the three-dimensional views. The packing shows 200 sphere meshes and all 10,000 centers; fabric statistics include all cells.'}
+};
+function updateMinkowski() {
+  const key = byId('minkowski-view').value;
+  const view = minkowskiViews[key];
+  const interactive = key === 'interactive';
+  const base = 'outputs/minkowski/';
+  byId('minkowski-image').hidden = interactive;
+  byId('minkowski-frame').hidden = !interactive;
+  if (!interactive) {
+    byId('minkowski-image').src = base + view.file;
+    byId('minkowski-image').alt = view.caption;
+  }
+  byId('minkowski-open').href = base + view.file;
+  byId('minkowski-save').href = base + (interactive ? 'workflow.png' : view.file);
+  byId('minkowski-caption').textContent = view.caption;
+}
+byId('minkowski-view').addEventListener('change', updateMinkowski);
+updateMinkowski();
+const minkowski = window.MFE_DATA?.minkowski;
+if (minkowski) {
+  byId('minkowski-count').textContent = minkowski.count.toLocaleString();
+  byId('minkowski-ed').textContent = minkowski.Ed.toFixed(4);
+  byId('minkowski-ad').textContent = minkowski.orientation_all_cells.Ad.toFixed(4);
+}

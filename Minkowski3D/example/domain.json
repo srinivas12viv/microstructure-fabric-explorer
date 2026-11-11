@@ -1,0 +1,22 @@
+{
+  "lattice_vectors": [
+    [
+      17.55905393,
+      0,
+      0
+    ],
+    [
+      -1.67981895,
+      17.57543396,
+      0
+    ],
+    [
+      0.0,
+      0.0,
+      17.54517572
+    ]
+  ],
+  "units": "mm",
+  "mode": "power",
+  "description": "Thesis packing snapshot: 10,000 polydisperse spheres; loading stage unspecified"
+}

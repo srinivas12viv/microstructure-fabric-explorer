@@ -9,3 +9,17 @@
 .contact-panel select{max-width:100%}
 @media(max-width:900px){.contact-panel .contact-preview{height:420px}}
 @media(max-width:650px){.contact-panel .contact-preview{height:425px}}
+.minkowski-panel [hidden]{display:none}
+.minkowski-preview{display:block;width:100%;height:480px;object-fit:contain;background:white}
+.minkowski-panel iframe{height:980px}
+.minkowski-panel select{max-width:100%}
+.minkowski-steps{list-style:none;padding:0;margin:22px 0;display:grid;grid-template-columns:1fr 1fr;gap:8px;counter-reset:stage}
+.minkowski-steps li{counter-increment:stage;font-size:11px;display:flex;gap:8px;align-items:center}
+.minkowski-steps li::before{content:counter(stage,decimal-leading-zero);font-size:9px;color:var(--teal);border:1px solid var(--line);padding:3px 5px}
+.minkowski-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:24px 0;padding:17px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.minkowski-metrics dt{font-size:9px;color:var(--muted)}
+.minkowski-metrics dd{margin:5px 0 0;font:25px Georgia,serif;color:var(--teal)}
+.developer{margin:0 5% 55px;padding:36px;border:1px solid var(--line);background:#eaf0e9;display:flex;justify-content:space-between;align-items:center;gap:32px}
+.developer .eyebrow{margin-bottom:12px}.developer h2{font-size:34px}.developer p:not(.eyebrow){font-size:13px;color:var(--muted);max-width:620px}.developer .button{flex-shrink:0}
+@media(max-width:900px){.developer{flex-wrap:wrap}.minkowski-preview{height:420px}}
+@media(max-width:650px){.developer{padding:25px}.developer h2{font-size:29px}.minkowski-preview{height:380px}.minkowski-metrics dd{font-size:23px}.minkowski-panel .controls label{flex-wrap:wrap}}

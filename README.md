@@ -1,8 +1,28 @@
 # Microstructure & Fabric Explorer
 
-Four Python tools for exploring contact networks, force transmission, and directional fabric from simulation or experimental data. The supplied examples come from discrete element method (DEM) simulations; experimental inputs must follow the same file schemas and supply the quantities required by each tool. ContactDetection3D also estimates geometric contacts from an already segmented, integer-labeled 3D TIFF. Image segmentation and force inference remain outside its scope. Open **index.html** to explore the gallery, locally and offline. Keep `outputs/` beside it: the interactive exports share a local Plotly bundle. 3D interaction requires WebGL. No web server or account is needed.
+Five Python tools for exploring contact networks, force transmission, and directional fabric from simulation or experimental data. The supplied examples come from discrete element method (DEM) simulations; experimental inputs must follow the same file schemas and supply the quantities required by each tool. ContactDetection3D also estimates geometric contacts from an already segmented, integer-labeled 3D TIFF. Image segmentation and force inference remain outside its scope. Open **index.html** to explore the gallery, locally and offline. Keep `outputs/` beside it: the interactive exports share a local Plotly bundle. 3D interaction requires WebGL. No web server or account is needed.
 
 Suggested GitHub repository name: `microstructure-fabric-explorer`.
+
+## Minkowski particle-void fabric
+
+[Minkowski3D](Minkowski3D/README.md) is a standalone fifth tool: particle
+positions and radii -> weighted periodic Voronoi cells -> Minkowski moments ->
+local elongation and assembly fabric. Its clean folder contains code, one
+10,000-particle sample, and its sheared periodic domain. No YADE installation
+is required. The gallery includes four static views and an interactive explorer. Rebuild all
+five modules with `python build_gallery.py`, or regenerate only the Minkowski
+webpage figures and download bundles with:
+
+```sh
+python -m pip install -r requirements.txt
+python build_minkowski_showcase.py
+```
+
+The webpage assets are generated under `outputs/minkowski/`. The standalone
+module also runs independently with `python Minkowski3D/run_example.py`; its
+local results are excluded from Git.
+The `Minkowski3D` folder can also be copied and used as a standalone toolkit.
 
 ## Setup and reproduce
 

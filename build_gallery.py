@@ -8,6 +8,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from ContactDetection3D.main import run as run_contacts
 from ContactDetection3D.config import Config
+from build_minkowski_showcase import build as build_minkowski, refresh_full_bundle
 from demviz import (ROOT, load_normals, polar_stats, spherical_stats, force_plot,
                     polar_figure, spherical_figure, write_plot)
 
@@ -42,6 +43,7 @@ def build():
             np.array([[azimuth[i],azimuth[i+1],mu[j],mu[j+1],counts[i,j]] for i in range(36) for j in range(18)]),
             delimiter=',',header='azimuth_start_rad,azimuth_end_rad,cos_theta_start,cos_theta_end,antipodal_count',comments='')
         metadata[dataset]['spherical_observations'] = int(counts.sum())
+    metadata['minkowski'] = build_minkowski(update_gallery=False, package=False)
     (output/'metadata.json').write_text(json.dumps(metadata,indent=2),encoding='utf-8')
     (ROOT/'gallery-data.js').write_text('window.MFE_DATA = '+json.dumps(metadata)+';\n',encoding='utf-8')
     downloads = ROOT/'downloads'
@@ -58,15 +60,9 @@ def build():
                 for path in (ROOT/folder/'out').iterdir():
                     if path.suffix in {'.svg', '.pdf', '.csv', '.npz'}:
                         bundle.write(path,path.relative_to(ROOT))
-    with ZipFile(downloads/'microstructure-fabric-explorer.zip','w',ZIP_DEFLATED) as bundle:
-        # Include example downloads without recursively including this archive.
-        for name in ['force-chain.zip', 'polar-histogram.zip', 'spherical-histogram.zip', 'contact-detection.zip']:
-            bundle.write(downloads/name, f'downloads/{name}')
-        for path in sorted(ROOT.rglob('*')):
-            if path.is_file() and not any(part in {'downloads','__pycache__','.git','.venv'} for part in path.relative_to(ROOT).parts):
-                bundle.write(path,path.relative_to(ROOT))
+    refresh_full_bundle()
     print(json.dumps(metadata,indent=2))
-    print('Built gallery outputs and five download bundles.')
+    print('Built gallery outputs and six download bundles.')
 
 
 if __name__ == '__main__':

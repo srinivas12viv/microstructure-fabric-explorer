@@ -2,7 +2,7 @@
 import numpy as np
 from scipy import ndimage
 from typing import Dict, List, Tuple, Set
-from particle_stats import pad_bbox
+from .particle_stats import pad_bbox
 
 
 def _connectivity_structure(connectivity: int) -> np.ndarray:
@@ -32,8 +32,10 @@ def _connectivity_structure(connectivity: int) -> np.ndarray:
 def compute_shell(mask_i: np.ndarray, shell_thickness: int, connectivity: int) -> np.ndarray:
     """
     mask_i is boolean ROI for particle i.
-    Returns shell = dilate(mask_i) \ mask_i
+    Returns the dilated mask minus the original particle mask.
     """
+    if not isinstance(shell_thickness, int) or shell_thickness < 1:
+        raise ValueError("shell_thickness must be a positive integer")
     st = _connectivity_structure(connectivity)
     dil = ndimage.binary_dilation(mask_i, structure=st, iterations=int(shell_thickness))
     shell = np.logical_and(dil, np.logical_not(mask_i))

@@ -24,7 +24,7 @@ byId('polar-dataset').addEventListener('change', updatePolar);
 byId('polar-plane').addEventListener('change', updatePolar);
 byId('sphere-dataset').addEventListener('change', updateSphere);
 byId('copy-command').addEventListener('click', async () => {
-  const commands = 'python -m pip install -r requirements.txt\npython build_gallery.py\npython PolarHistogram2D/PolarHistogram.py --plane xz --output outputs/my-polar.html';
+  const commands = 'python -m pip install -r requirements.txt\npython build_gallery.py\npython ContactDetection3D/main.py\npython PolarHistogram2D/PolarHistogram.py --plane xz --output outputs/my-polar.html';
   try {
     await navigator.clipboard.writeText(commands);
     byId('copy-status').textContent = 'Commands copied.';
@@ -36,3 +36,16 @@ const force = window.MFE_DATA?.force;
 if (force) byId('force-caption').textContent = `${force.particles.toLocaleString()} particles · ${force.plotted.toLocaleString()} contacts plotted · ${force.excluded} contacts excluded by the 0.1 component-gap filter. Force units are inherited from the input.`;
 updatePolar();
 updateSphere();
+
+const contactViews = {
+  patch: ['typicalContact.svg', 'Supplied contact-patch example: particle surfaces in blue and green; detected contact voxels in red.'],
+  normals: ['centroids_normals.svg', 'Supplied 3D distribution of contact centroids and axial PCA normals.'],
+  coordination: ['histogram.svg', 'Supplied coordination distribution. The original figure reports mean Z = 4.80; see the documentation for averaging conventions.']
+};
+byId('contact-view').addEventListener('change', () => {
+  const [file, caption] = contactViews[byId('contact-view').value];
+  byId('contact-image').src = `ContactDetection3D/out/${file}`;
+  byId('contact-image').alt = caption;
+  byId('contact-open').href = `ContactDetection3D/out/${file}`;
+  byId('contact-caption').textContent = caption;
+});

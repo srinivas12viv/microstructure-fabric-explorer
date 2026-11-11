@@ -1,18 +1,29 @@
-# main.py
+"""Detect contacts in a segmented TIFF; export geometry, fabric and toolkit inputs."""
+from pathlib import Path
+import argparse
+import json
+import sys
+
+# Support both direct script invocation and package imports from any directory.
+if __package__ in (None, ""):
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    __package__ = "ContactDetection3D"
+
 import os
 import numpy as np
 
-from config import Config
-from io_utils import load_label_tiff, ensure_dir, save_npz, save_contacts_csv
-from particle_stats import get_particle_ids, compute_bounding_boxes
-from contact_detection import find_contacts_for_particle
-from contact_geometry import contact_centroid, pca_contact_frame, planarity_score
-from fabric import build_adjacency_from_pairs, coordination_numbers, fabric_tensor, fabric_eigensystem
+from .config import Config
+from .io_utils import load_label_tiff, ensure_dir, save_npz, save_contacts_csv
+from .particle_stats import get_particle_ids, compute_bounding_boxes
+from .contact_detection import find_contacts_for_particle
+from .contact_geometry import contact_centroid, pca_contact_frame, planarity_score
+from .fabric import build_adjacency_from_pairs, coordination_numbers, fabric_tensor, fabric_eigensystem
 
-import viz
+from . import viz
 
 
 def run(cfg: Config):
+    """Run detection with Config; write outputs and return summary statistics."""
     ensure_dir(cfg.out_dir)
 
     labels = load_label_tiff(cfg.tiff_path)
@@ -26,7 +37,6 @@ def run(cfg: Config):
 
     # Store contacts uniquely as (i<j) -> coords
     contacts_coords = {}  # (i,j) -> coords (N,3) global zyx
-    contact_meta = {}     # (i,j) -> dict info (voxel_count, eigvals, planarity)
 
     # First loop: per particle i, detect neighbors and contact voxel clouds
     for idx, pid in enumerate(particle_ids, start=1):
@@ -34,7 +44,7 @@ def run(cfg: Config):
         if pid not in bboxes:
             continue
 
-        contacts_i, nbrs_i, roi_i = find_contacts_for_particle(
+        contacts_i, _, _ = find_contacts_for_particle(
             labels=labels,
             pid=pid,
             bbox_pid=bboxes[pid],
@@ -82,6 +92,9 @@ def run(cfg: Config):
 
         c_mm = contact_centroid(coords, cfg.voxel_size_mm)
         t1, t2, n, eigvals = pca_contact_frame(coords, cfg.voxel_size_mm)
+        # A line or point has no uniquely determined plane normal.
+        if eigvals[1] <= np.finfo(float).eps * max(eigvals[0], np.finfo(float).tiny) * 100:
+            continue
         pl = planarity_score(eigvals)
 
         pairs.append((i, j))
@@ -103,16 +116,16 @@ def run(cfg: Config):
             "eig1": float(eigvals[0]), "eig2": float(eigvals[1]), "eig3": float(eigvals[2]),
         })
 
-    centers_mm = np.asarray(centers_mm, dtype=float)
-    normals = np.asarray(normals, dtype=float)
-    tangents1 = np.asarray(tangents1, dtype=float)
-    tangents2 = np.asarray(tangents2, dtype=float)
+    centers_mm = np.asarray(centers_mm, dtype=float).reshape(-1, 3)
+    normals = np.asarray(normals, dtype=float).reshape(-1, 3)
+    tangents1 = np.asarray(tangents1, dtype=float).reshape(-1, 3)
+    tangents2 = np.asarray(tangents2, dtype=float).reshape(-1, 3)
     voxel_counts = np.asarray(voxel_counts, dtype=int)
     planarity = np.asarray(planarity, dtype=float)
-    eigvals_all = np.asarray(eigvals_all, dtype=float)
-    pairs_arr = np.asarray(pairs, dtype=int)
+    eigvals_all = np.asarray(eigvals_all, dtype=float).reshape(-1, 3)
+    pairs_arr = np.asarray(pairs, dtype=int).reshape(-1, 2)
 
-    print(f"Contacts retained after min_contact_voxels={cfg.min_contact_voxels}: {len(pairs)}")
+    print(f"Contacts retained after size/rank filtering, min_contact_voxels={cfg.min_contact_voxels}: {len(pairs)}")
 
     # Coordination + fabric
     adj = build_adjacency_from_pairs(pairs)
@@ -128,6 +141,8 @@ def run(cfg: Config):
     out_npz = os.path.join(cfg.out_dir, "contact_results.npz")
     save_npz(
         out_npz,
+        particle_ids=particle_ids,
+        voxel_size_mm=np.asarray(cfg.voxel_size_mm),
         pairs=pairs_arr,
         centers_mm=centers_mm,
         normals=normals,
@@ -146,106 +161,82 @@ def run(cfg: Config):
     print(f"Saved NPZ: {out_npz}")
 
     out_csv = os.path.join(cfg.out_dir, "contacts_summary.csv")
-    if contact_rows:
-        save_contacts_csv(out_csv, contact_rows)
-        print(f"Saved CSV: {out_csv}")
-
-    # Debug visualization (optional)
-    # Debug visualization (optional)
-    # Priority:
-    #   1) debug_pair if provided
-    #   2) debug_contact_idx if provided (indexes into *retained* contacts)
-    debug_key = None
-
-    # (1) Manual pair override
-    if getattr(cfg, "debug_pair", None) is not None:
-        di, dj = cfg.debug_pair
-        debug_key = (min(int(di), int(dj)), max(int(di), int(dj)))
-
-    # (2) Debug by retained-contact index (after min_contact_voxels)
-    elif getattr(cfg, "debug_contact_idx", None) is not None:
-        idx = int(cfg.debug_contact_idx)
-
-        # pairs is the retained list in the second loop (aligned with normals, centers_mm, etc.)
-        if idx < 0 or idx >= len(pairs):
-            print(
-                f"debug_contact_idx={idx} out of range for retained contacts. "
-                f"Valid: 0..{len(pairs) - 1} (retained contacts={len(pairs)})."
-            )
-        else:
-            i, j = pairs[idx]
-            debug_key = (int(i), int(j))
-            # Helpful printout
-            print(
-                f"Debugging retained contact idx={idx}: pair={debug_key}, "
-                f"nvox={int(voxel_counts[idx])}, planarity={float(planarity[idx]):.4f}"
-            )
-
-    # If we identified a key, visualize it
-    if debug_key is not None:
-        if debug_key in contacts_coords:
-            coords = contacts_coords[debug_key]
-
-            # Use voxel centroid for slice indexing
-            center_vox = coords.mean(axis=0)
-
-            # Optional 2D slices
-            viz.plot_contact_slices(labels, debug_key[0], debug_key[1], coords, center_vox, pad=cfg.viz_pad_vox)
-
-            # Compute vectors for 3D plot
-            c_mm = contact_centroid(coords, cfg.voxel_size_mm)
-            t1, t2, n, _ = pca_contact_frame(coords, cfg.voxel_size_mm)
-
-            # 3D scatter debug (points)
-            #viz.plot_contact_3d(
-            #    labels=labels,
-            #    pid=debug_key[0],
-            #    nid=debug_key[1],
-            #    contact_coords_zyx=coords,
-            #    voxel_size_mm=cfg.voxel_size_mm,
-            #    center_mm=c_mm,
-            #    n=n,
-            #    t1=t1,
-            #    stride=cfg.viz_stride,
-            #    roi_pad_vox=cfg.viz_pad_vox,
-            #)
-
-            # 3D voxel-cube debug (cubes)
-            # Uncomment if you want cubes instead of points (or run both)
-            viz.plot_contact_voxel_cubes(
-                 labels=labels,
-                 pid=debug_key[0],
-                 nid=debug_key[1],
-                 contact_coords_zyx=coords,
-                 voxel_size_mm=cfg.voxel_size_mm,
-                 center_mm=c_mm,
-                 roi_pad_vox=cfg.viz_pad_vox,
-                 alpha_particles=0.5,
-                 alpha_contact=0.9,
-             )
-
-        else:
-            print(f"Debug contact {debug_key} not found in detected contacts_coords.")
-
-    return {
-        "Zmean": Zmean,
-        "F": F,
-        "Fw": Fw,
-        "n_contacts": len(pairs),
-        "n_particles": len(particle_ids),
+    save_contacts_csv(out_csv, contact_rows)
+    # Toolkit readers expect XYZ, whereas image-space arrays above use ZYX.
+    # Unit weights describe geometric orientation only; no forces are measured.
+    np.savetxt(Path(cfg.out_dir) / "normals.txt",
+               np.column_stack([normals[:, ::-1], np.ones(len(normals))]),
+               header="nx ny nz f", comments="")
+    summary = {
+        "n_particles": len(particle_ids), "n_contacts": len(pairs),
+        "candidate_pairs": len(keys), "discarded_pairs": len(keys) - len(pairs),
+        "mean_coordination_contacting": Zmean,
+        "mean_coordination_all": 2 * len(pairs) / len(particle_ids) if len(particle_ids) else 0.0,
+        "coordinate_order": "zyx", "voxel_size_mm": cfg.voxel_size_mm,
+        "shell_thickness_vox": cfg.shell_thickness_vox, "connectivity": cfg.connectivity,
+        "min_contact_voxels": cfg.min_contact_voxels,
+        "fabric_tensor": F.tolist(), "fabric_tensor_weighted": Fw.tolist(),
+        "orientation_export": "normals.txt: XYZ, unit weights (not measured forces)",
     }
+    (Path(cfg.out_dir) / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    np.savetxt(Path(cfg.out_dir) / "coordination.csv",
+               np.asarray([(int(pid), Zi.get(int(pid), 0)) for pid in particle_ids], dtype=int).reshape(-1, 2),
+               delimiter=",", header="particle_id,coordination", comments="", fmt="%d")
+    if cfg.plots:
+        viz.save_overview(centers_mm, normals, [Zi.get(int(pid), 0) for pid in particle_ids],
+                          cfg.out_dir, show=cfg.show)
+    debug_key = cfg.debug_pair
+    if debug_key is None and cfg.debug_contact_idx is not None:
+        if not 0 <= cfg.debug_contact_idx < len(pairs):
+            raise ValueError("debug-contact-index is outside the retained contact range")
+        debug_key = pairs[cfg.debug_contact_idx]
+    if debug_key is not None:
+        debug_key = tuple(sorted(debug_key))
+        if debug_key not in pairs:
+            raise ValueError(f"Debug pair {debug_key} is not a retained contact")
+        coords = contacts_coords[debug_key]
+        viz.plot_contact_slices(labels, *debug_key, coords, coords.mean(axis=0),
+                                pad=cfg.viz_pad_vox, output=Path(cfg.out_dir) / "contact-slices.png", show=cfg.show)
+        viz.plot_contact_voxel_cubes(labels, *debug_key, coords, cfg.voxel_size_mm,
+                                     contact_centroid(coords, cfg.voxel_size_mm),
+                                     roi_pad_vox=cfg.viz_pad_vox,
+                                     output=Path(cfg.out_dir) / "contact-voxels.png", show=cfg.show)
+    return summary
+
+
+def main():
+    """Command-line entry point; defaults are independent of the working directory."""
+    defaults = Config()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--input", default=defaults.tiff_path, help="Integer labeled 3D TIFF (ZYX)")
+    parser.add_argument("--output-dir", default=defaults.out_dir)
+    parser.add_argument("--voxel-size-mm", type=float, default=defaults.voxel_size_mm,
+                        help="Isotropic voxel spacing in mm (default 1 is an uncalibrated placeholder)")
+    parser.add_argument("--shell-thickness", type=int, default=1, help="Dilation iterations, >=1")
+    parser.add_argument("--connectivity", type=int, choices=[6, 18, 26], default=26)
+    parser.add_argument("--min-contact-voxels", type=int, default=3)
+    parser.add_argument("--exclude-labels", type=int, nargs="+", default=[0])
+    debug = parser.add_mutually_exclusive_group()
+    debug.add_argument("--debug-pair", type=int, nargs=2)
+    debug.add_argument("--debug-contact-index", type=int)
+    parser.add_argument("--viz-pad", type=int, default=10)
+    parser.add_argument("--show", action="store_true", help="Also open Matplotlib windows")
+    parser.add_argument("--no-plots", action="store_true", help="Skip overview figures")
+    args = parser.parse_args()
+    if not args.show:
+        import matplotlib
+        matplotlib.use("Agg")
+    try:
+        result = run(Config(tiff_path=args.input, out_dir=args.output_dir,
+                            voxel_size_mm=args.voxel_size_mm, shell_thickness_vox=args.shell_thickness,
+                            connectivity=args.connectivity, min_contact_voxels=args.min_contact_voxels,
+                            exclude_labels=tuple(args.exclude_labels), debug_pair=args.debug_pair,
+                            debug_contact_idx=args.debug_contact_index, viz_pad_vox=args.viz_pad,
+                            show=args.show, plots=not args.no_plots))
+    except (ValueError, OSError) as error:
+        parser.exit(2, f"Error: {error}\n")
+    print(json.dumps(result, indent=2))
 
 
 if __name__ == "__main__":
-    # Edit these defaults or replace with argparse as needed
-    cfg = Config(
-        tiff_path="SCP_labeled_N5_ov1.tif",
-        out_dir="out",
-        voxel_size_mm= 1.0,  #/ 40.0,
-        shell_thickness_vox=1,
-        connectivity=26,
-        min_contact_voxels=2,
-        debug_contact_idx=50, # 0-based index into retained contacts (after min_contact_voxels)
-        #debug_pair=(1,2),  # e.g., (12, 45)
-    )
-    run(cfg)
+    main()

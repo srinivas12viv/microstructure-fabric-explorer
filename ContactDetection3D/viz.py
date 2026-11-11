@@ -7,7 +7,7 @@ def _clip(a, lo, hi):
     return max(lo, min(hi, a))
 
 
-def plot_contact_slices(labels, pid, nid, contact_coords_zyx, center_zyx_vox, pad=10):
+def plot_contact_slices(labels, pid, nid, contact_coords_zyx, center_zyx_vox, pad=10, output=None, show=True):
     """
     Quick debugging: show z-, y-, x-slices through the contact centroid.
     """
@@ -34,7 +34,11 @@ def plot_contact_slices(labels, pid, nid, contact_coords_zyx, center_zyx_vox, pa
 
     plt.suptitle(f"Contact debug: pid={pid} nid={nid}  (#pts={len(contact_coords_zyx)})")
     plt.tight_layout()
-    plt.show()
+    if output is not None:
+        fig.savefig(output, dpi=160)
+    if show:
+        plt.show()
+    plt.close(fig)
 
 
 def plot_contact_3d(
@@ -50,6 +54,8 @@ def plot_contact_3d(
     roi_pad_vox=12,
     particle_stride=3,
     max_particle_pts=50000,
+    output=None,
+    show=True,
 ):
     """
     3D scatter of:
@@ -138,13 +144,17 @@ def plot_contact_3d(
     ax.quiver(c_plot[0], c_plot[1], c_plot[2], *v_to_plot(n) * scale, length=1.0, normalize=False)
     ax.quiver(c_plot[0], c_plot[1], c_plot[2], *v_to_plot(t1) * scale, length=1.0, normalize=False)
 
-    ax.set_xlabel("x (voxels)")
-    ax.set_ylabel("y (voxels)")
-    ax.set_zlabel("z (voxels)")
+    ax.set_xlabel("x (mm)")
+    ax.set_ylabel("y (mm)")
+    ax.set_zlabel("z (mm)")
     ax.set_title(f"Contact pid={pid} nid={nid}: particles (faint) + contact voxels + PCA vectors")
 
     plt.tight_layout()
-    plt.show()
+    if output is not None:
+        fig.savefig(output, dpi=160)
+    if show:
+        plt.show()
+    plt.close(fig)
 
 
 # --- voxel cube visualization -------------------------------------------------
@@ -181,6 +191,8 @@ def plot_contact_voxel_cubes(
     alpha_particles=0.5,
     alpha_contact=0.9,
     show_contact_only_in_roi=True,
+    output=None,
+    show=True,
 ):
     """
     Voxel-cube visualization (Matplotlib ax.voxels) in a local ROI:
@@ -239,19 +251,21 @@ def plot_contact_voxel_cubes(
 
     # Particle surfaces first (so contact appears on top)
     if np.any(s_pid):
-        ax.voxels(s_pid, facecolors=(0.0, 0.0, 1.0, float(alpha_particles)), edgecolor=None)  # blue
+        ax.voxels(s_pid.transpose(2, 1, 0), facecolors=(0.0, 0.0, 1.0, float(alpha_particles)), edgecolor=None)  # blue
     if np.any(s_nid):
-        ax.voxels(s_nid, facecolors=(0.0, 1.0, 0.0, float(alpha_particles)), edgecolor=None)  # green
+        ax.voxels(s_nid.transpose(2, 1, 0), facecolors=(0.0, 1.0, 0.0, float(alpha_particles)), edgecolor=None)  # green
     if np.any(contact_roi):
-        ax.voxels(contact_roi, facecolors=(1.0, 0.0, 0.0, float(alpha_contact)), edgecolor=None)  # red
+        ax.voxels(contact_roi.transpose(2, 1, 0), facecolors=(1.0, 0.0, 0.0, float(alpha_contact)), edgecolor=None)  # red
 
-    # ---- Axis labels in mm (ticks relabeled) ----
+    ax.set_box_aspect(roi.shape[::-1])
+    ax.tick_params(labelsize=8)
+    # ---- Local ROI axis labels in mm (ticks relabeled) ----
     dz = dy = dx = float(voxel_size_mm)
     nz, ny, nx = roi.shape
 
-    ax.set_xlabel("x (voxels)", labelpad=12)
-    ax.set_ylabel("y (voxels)", labelpad=12)
-    ax.set_zlabel("z (voxels)", labelpad=12)
+    ax.set_xlabel("x (mm)", labelpad=12)
+    ax.set_ylabel("y (mm)", labelpad=12)
+    ax.set_zlabel("z (mm)", labelpad=12)
 
     ax.set_xlim(0, nx)
     ax.set_ylim(0, ny)
@@ -267,8 +281,45 @@ def plot_contact_voxel_cubes(
     _set_mm_ticks(ax.set_zticks, ax.set_zticklabels, nz, dz)
 
     ax.set_title(
-        f"Voxel cubes (ROI={roi.shape}): pid={pid} (blue surface), nid={nid} (green surface), contact (red)"
+        f"Contact {pid} / {nid}: local voxel geometry\nBlue / green: particle surfaces; red: contact patch"
     )
 
-    plt.tight_layout()
-    plt.show()
+    fig.subplots_adjust(left=0.08, right=0.90, bottom=0.10, top=0.85)
+    if output is not None:
+        fig.savefig(output, dpi=160)
+    if show:
+        plt.show()
+    plt.close(fig)
+
+
+def save_overview(centers, normals, coordination, out_dir, show=False):
+    """Save reproducible centroid/normal and all-particle coordination previews."""
+    from pathlib import Path
+    out_dir = Path(out_dir)
+    fig = plt.figure(figsize=(8, 6))
+    ax = fig.add_subplot(projection="3d")
+    if len(centers):
+        xyz = centers[:, ::-1]
+        directions = normals[:, ::-1]
+        length = max(float(np.ptp(xyz, axis=0).max()) * 0.04, 1e-6)
+        ax.scatter(*xyz.T, s=8, color="#087e83")
+        for sign in (-1, 1):
+            ax.quiver(*xyz.T, *(sign * directions).T, length=length, color="#d56e42", arrow_length_ratio=0)
+        ax.set_box_aspect(np.maximum(np.ptp(xyz, axis=0), length))
+    else:
+        ax.text2D(0.2, 0.5, "No retained contacts", transform=ax.transAxes)
+    ax.set(xlabel="x (mm)", ylabel="y (mm)", zlabel="z (mm)", title="Contact centroids and axial PCA normals")
+    fig.tight_layout()
+    fig.savefig(out_dir / "centroids-normals.png", dpi=160)
+    if show:
+        plt.show()
+    plt.close(fig)
+    fig, ax = plt.subplots(figsize=(7, 4))
+    values = np.asarray(coordination, dtype=int)
+    ax.hist(values, bins=np.arange(-0.5, (values.max() if values.size else 0) + 1.5), color="#087e83", edgecolor="white")
+    ax.set(xlabel="Coordination number", ylabel="Number of particles", title="Coordination including isolated particles")
+    fig.tight_layout()
+    fig.savefig(out_dir / "coordination.png", dpi=160)
+    if show:
+        plt.show()
+    plt.close(fig)

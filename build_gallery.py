@@ -3,7 +3,11 @@ import json
 from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
 import numpy as np
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from ContactDetection3D.main import run as run_contacts
+from ContactDetection3D.config import Config
 from demviz import (ROOT, load_normals, polar_stats, spherical_stats, force_plot,
                     polar_figure, spherical_figure, write_plot)
 
@@ -11,7 +15,8 @@ from demviz import (ROOT, load_normals, polar_stats, spherical_stats, force_plot
 def build():
     output = ROOT/'outputs'
     output.mkdir(exist_ok=True)
-    metadata = {'force': force_plot(ROOT/'ForceChain2D/pos.txt', ROOT/'ForceChain2D/normals.txt', output/'force-chain.png')}
+    contact_metadata = run_contacts(Config())
+    metadata = {'contacts3d': contact_metadata, 'force': force_plot(ROOT/'ForceChain2D/pos.txt', ROOT/'ForceChain2D/normals.txt', output/'force-chain.png')}
     for dataset in ['Iso', 'Aniso']:
         vectors, forces = load_normals(ROOT/f'PolarHistogram2D/normals_{dataset}.txt')
         metadata[dataset] = {'contacts':len(vectors), 'planes':{}}
@@ -42,22 +47,26 @@ def build():
     downloads = ROOT/'downloads'
     downloads.mkdir(exist_ok=True)
     common = ['demviz.py','requirements.txt','README.md','LICENSE-NOTE.md']
-    for name,folder in [('force-chain','ForceChain2D'),('polar-histogram','PolarHistogram2D'),('spherical-histogram','SphericalHistogram3D')]:
+    for name,folder in [('force-chain','ForceChain2D'),('polar-histogram','PolarHistogram2D'),('spherical-histogram','SphericalHistogram3D'),('contact-detection','ContactDetection3D')]:
         with ZipFile(downloads/f'{name}.zip','w',ZIP_DEFLATED) as bundle:
             for relative in common:
                 bundle.write(ROOT/relative,relative)
             for path in (ROOT/folder).iterdir():
-                if path.suffix in ['.py','.txt']:
+                if path.suffix in ['.py','.txt','.md','.tif']:
                     bundle.write(path,path.relative_to(ROOT))
+            if folder == 'ContactDetection3D':
+                for path in (ROOT/folder/'out').iterdir():
+                    if path.suffix in {'.svg', '.pdf', '.csv', '.npz'}:
+                        bundle.write(path,path.relative_to(ROOT))
     with ZipFile(downloads/'microstructure-fabric-explorer.zip','w',ZIP_DEFLATED) as bundle:
         # Include example downloads without recursively including this archive.
-        for name in ['force-chain.zip', 'polar-histogram.zip', 'spherical-histogram.zip']:
+        for name in ['force-chain.zip', 'polar-histogram.zip', 'spherical-histogram.zip', 'contact-detection.zip']:
             bundle.write(downloads/name, f'downloads/{name}')
         for path in sorted(ROOT.rglob('*')):
             if path.is_file() and not any(part in {'downloads','__pycache__','.git','.venv'} for part in path.relative_to(ROOT).parts):
                 bundle.write(path,path.relative_to(ROOT))
     print(json.dumps(metadata,indent=2))
-    print('Built gallery outputs and four download bundles.')
+    print('Built gallery outputs and five download bundles.')
 
 
 if __name__ == '__main__':

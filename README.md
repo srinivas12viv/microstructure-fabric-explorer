@@ -1,6 +1,6 @@
 # Microstructure & Fabric Explorer
 
-Three Python tools for exploring contact networks, force transmission, and directional fabric from simulation or experimental data. The supplied examples come from discrete element method (DEM) simulations; experimental inputs must follow the same file schemas and supply the quantities required by each tool. The toolkit visualizes prepared numeric data; extracting contacts or forces from experimental images is outside its scope. Open **index.html** to explore the gallery, locally and offline. Keep `outputs/` beside it: the interactive exports share a local Plotly bundle. 3D interaction requires WebGL. No web server or account is needed.
+Four Python tools for exploring contact networks, force transmission, and directional fabric from simulation or experimental data. The supplied examples come from discrete element method (DEM) simulations; experimental inputs must follow the same file schemas and supply the quantities required by each tool. ContactDetection3D also estimates geometric contacts from an already segmented, integer-labeled 3D TIFF. Image segmentation and force inference remain outside its scope. Open **index.html** to explore the gallery, locally and offline. Keep `outputs/` beside it: the interactive exports share a local Plotly bundle. 3D interaction requires WebGL. No web server or account is needed.
 
 Suggested GitHub repository name: `microstructure-fabric-explorer`.
 
@@ -14,17 +14,30 @@ python build_gallery.py
 python -m unittest discover -s tests -v
 ```
 
-The builder regenerates figures, CSV bin tables, metadata, and ZIP downloads. Original scripts are saved under `originals/`; the pre-existing images and `SphericalHistogram3D/figure.html` are retained. New results go to `outputs/`.
+The builder runs contact detection on the supplied TIFF and regenerates figures, CSV tables, metadata, and ZIP downloads. This requires more time and memory than the histogram examples; contact results go to `outputs/contact-detection/`. Original scripts are saved under `originals/`; the pre-existing images and `SphericalHistogram3D/figure.html` are retained. New results go to `outputs/`.
 
 ## Run individual tools
 
 ```sh
+python ContactDetection3D/main.py
 python ForceChain2D/ForceChain.py
 python PolarHistogram2D/PolarHistogram.py --input PolarHistogram2D/normals_Aniso.txt --plane xz --bins 36 --output outputs/custom-polar.html
 python SphericalHistogram3D/3DHistogram.py --input SphericalHistogram3D/normals_Iso.txt --longitude-bins 36 --latitude-bins 18 --output outputs/custom-sphere.html
 ```
 
 Default paths resolve relative to the code, so scripts also work from a different working directory. Supplied custom relative paths resolve from your working directory. Each script supports `--help`. Example ZIPs contain their tool, shared module, data, and setup notes; the full toolkit also contains the gallery and generated outputs.
+
+## Labeled-image contact detection
+
+See [ContactDetection3D/README.md](ContactDetection3D/README.md) for the complete CLI, Python API, output schemas, axis conventions, and limitations. Run `python ContactDetection3D/main.py --help` for options. The gallery features three original SVG figures and links to the supplied validation slides; those historical figures are preserved separately from regenerated outputs.
+
+```sh
+python ContactDetection3D/main.py --input ContactDetection3D/scp_labeled_N5_ov1.tif --output-dir outputs/my-contacts --voxel-size-mm 1
+python PolarHistogram2D/PolarHistogram.py --input outputs/my-contacts/normals.txt --output outputs/image-polar.html
+python SphericalHistogram3D/3DHistogram.py --input outputs/my-contacts/normals.txt --output outputs/image-sphere.html
+```
+
+`--voxel-size-mm 1` is a placeholder, not a verified sample calibration. Replace it with your isotropic image spacing. Exported orientation weights are all one: these plots summarize contact counts, not measured forces. ForceChain2D additionally requires positions and forces that this image workflow does not supply.
 
 ## Input formats
 

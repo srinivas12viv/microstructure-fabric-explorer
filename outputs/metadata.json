@@ -1,4 +1,52 @@
 {
+  "contacts3d": {
+    "n_particles": 125,
+    "n_contacts": 300,
+    "candidate_pairs": 300,
+    "discarded_pairs": 0,
+    "mean_coordination_contacting": 4.8,
+    "mean_coordination_all": 4.8,
+    "coordinate_order": "zyx",
+    "voxel_size_mm": 1.0,
+    "shell_thickness_vox": 1,
+    "connectivity": 26,
+    "min_contact_voxels": 3,
+    "fabric_tensor": [
+      [
+        0.33333333333333304,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.33333333333333304,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.33333333333333304
+      ]
+    ],
+    "fabric_tensor_weighted": [
+      [
+        0.333333333333333,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.333333333333333,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.333333333333333
+      ]
+    ],
+    "orientation_export": "normals.txt: XYZ, unit weights (not measured forces)"
+  },
   "force": {
     "particles": 10000,
     "contacts": 19535,

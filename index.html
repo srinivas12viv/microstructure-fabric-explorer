@@ -32,25 +32,9 @@
     <div class="tool-copy"><span class="tool-number">03 / SPATIAL CONTACT FABRIC</span><h3>See the<br>whole orientation.</h3><p>Explore contact directions on a sphere. Equal-solid-angle bins make counts comparable across directions; wedge length and color reveal concentration.</p><div class="use-case"><span>USE IT FOR</span><p>Examining full 3D fabric, identifying spatial alignment, and finding patterns that a planar projection can hide.</p></div><div class="tags"><span>NUMPY + PLOTLY</span><span>ROTATABLE 3D</span></div><div class="tool-links"><a href="downloads/spherical-histogram.zip" download>Download code + data ↘</a><a href="SphericalHistogram3D/3DHistogram.py">View entry script ↗</a></div></div>
     <div class="visual-panel"><div class="panel-toolbar controls"><label>Dataset <select id="sphere-dataset"><option value="aniso">Aniso</option><option value="iso">Iso</option></select></label><span class="interaction-hint">DRAG TO ROTATE · PINCH TO ZOOM</span><a id="sphere-open" href="outputs/sphere-aniso.html" target="_blank" rel="noopener">Open plot ↗</a></div><iframe id="sphere-frame" title="Rotatable three-dimensional contact orientation histogram" src="outputs/sphere-aniso.html" loading="lazy"></iframe><div class="panel-caption"><p id="sphere-caption" aria-live="polite">36 azimuth × 18 latitude bands · Equal solid angle</p><div><a id="sphere-csv" href="outputs/sphere-aniso.csv" download>Bin data CSV ↓</a> <a id="sphere-png" href="outputs/sphere-aniso.png">Static preview ↗</a></div></div></div>
   </article>
-  <article class="tool contact-tool" id="contacts">
-    <div class="tool-copy">
-      <span class="tool-number">04 / IMAGE-BASED CONTACT DETECTION</span>
-      <h3>From the labelled 3D image<br>to contact fabric.</h3>
-      <p>Turn a labelled 3D image into a picture of how particles connect and how their contacts are oriented. The tool identifies neighboring particles, estimates contact locations and directions, and measures coordination and contact fabric to reveal preferred alignment within the material.</p>
-      <div class="use-case"><span>REAL PARTICLES, REAL SHAPES</span><p>Designed for segmented 3D X-ray micro-CT images, including irregular particle shapes. Spheres are shown here for simplicity and validation. The results describe geometric contacts and orientation; they do not measure contact forces.</p></div>
-      <div class="tags"><span>SCIPY + TIFFFILE</span><span>3D X-RAY MICRO-CT</span><span>REAL PARTICLE SHAPES</span></div>
-      <div class="tool-links"><a href="downloads/contact-detection.zip" download>Download code + sample TIFF</a><a href="ContactDetection3D/README.md">Usage &amp; methods</a><a href="ContactDetection3D/main.py">View entry script</a></div>
-    </div>
-    <div class="visual-panel contact-panel">
-      <div class="panel-toolbar controls"><label>View <select id="contact-view"><option value="volume">Segmented 3D image</option><option value="patch">Contact voxel patch</option><option value="normals">Centroids &amp; normals</option><option value="coordination">Coordination distribution</option></select></label><a id="contact-open" href="outputs/contact-detection/segmented-volume.html" target="_blank" rel="noopener">Open view</a></div>
-      <iframe id="contact-frame" title="Rotatable 3D view of the original segmented TIFF showing individually colored spherical particles" src="outputs/contact-detection/segmented-volume.html" loading="lazy"></iframe>
-      <img id="contact-image" class="contact-preview" src="outputs/contact-detection/contact-voxels.png" alt="Contact voxel patch highlighted in red between two particle surfaces." hidden>
-      <div class="panel-caption"><p id="contact-caption" aria-live="polite">Original segmented TIFF: colors distinguish particle labels. Drag to rotate and zoom. Surface display samples every third voxel; contact detection uses the full image.</p><p id="contact-summary">125 particles; 300 contacts; mean coordination 4.80.</p><p>All views come from the supplied labeled TIFF. Use calibrated voxel spacing for physical distances; geometric proximity does not measure force.</p><a id="contact-save" href="outputs/contact-detection/segmented-volume.png" download>Save PNG</a><a href="outputs/contact-detection/contacts_summary.csv" download>Contact table CSV</a><a href="ContactDetection3D/out/Validation_contact_algorithm.pdf">Validation slides (PDF)</a></div>
-    </div>
-  </article>
   <article class="tool minkowski-tool" id="minkowski">
     <div class="tool-copy">
-      <span class="tool-number">05 / MINKOWSKI PARTICLE-VOID FABRIC</span>
+      <span class="tool-number">04 / MINKOWSKI PARTICLE-VOID FABRIC</span>
       <h3>From particle-void geometry<br> to fabric tensors.</h3>
       <p>Start with positions and radii. Build weighted Voronoi cells, measure their shape with Minkowski moment tensors, and quantify how their principal axes align across the packing.</p>
       <p>Based on the master's thesis by Srinivas Vivek Bokkisa, <a href="https://doi.org/10.14711/thesis-991012752454703412" target="_blank" rel="noopener"><cite>Fabric evolution in 3D discrete element modelling of soil liquefaction</cite></a> (2019).</p>
@@ -67,14 +51,31 @@
       <div class="panel-caption"><p id="minkowski-caption" aria-live="polite">Actual sample cell: gold shows the particle, teal shows its Voronoi boundary and moment-equivalent ellipsoid, and red marks the principal axis. Coordinates are offsets from the cell centroid.</p><p>10,000 polydisperse spheres &middot; sheared periodic domain &middot; centroid moments. Ed measures local shape; Ad measures collective alignment (aligned limit 7.5). The normalized cell describes the particle environment, including the particle.</p><a id="minkowski-save" href="outputs/minkowski/cell.png" download>Save PNG</a><a href="outputs/minkowski/cells.csv" download>Cell data CSV</a><a href="outputs/minkowski/fabric.json">Fabric tensor &amp; metadata</a></div>
     </div>
   </article>
+  <article class="tool contact-tool" id="contacts">
+    <div class="tool-copy">
+      <span class="tool-number">05 / IMAGE-BASED CONTACT DETECTION</span>
+      <h3>From the labelled 3D image<br>to contact fabric.</h3>
+      <p>Turn a labelled 3D image into a picture of how particles connect and how their contacts are oriented. The tool identifies neighboring particles, estimates contact locations and directions, and measures coordination and contact fabric to reveal preferred alignment within the material.</p>
+      <div class="use-case"><span>REAL PARTICLES, REAL SHAPES</span><p>Designed for segmented 3D X-ray micro-CT images, including irregular particle shapes. Spheres are shown here for simplicity and validation. The results describe geometric contacts and orientation; they do not measure contact forces.</p></div>
+      <div class="tags"><span>SCIPY + TIFFFILE</span><span>3D X-RAY MICRO-CT</span><span>REAL PARTICLE SHAPES</span></div>
+      <div class="tool-links"><a href="downloads/contact-detection.zip" download>Download code + sample TIFF</a><a href="ContactDetection3D/README.md">Usage &amp; methods</a><a href="ContactDetection3D/main.py">View entry script</a></div>
+    </div>
+    <div class="visual-panel contact-panel">
+      <div class="panel-toolbar controls"><label>View <select id="contact-view"><option value="volume">Segmented 3D image</option><option value="patch">Contact voxel patch</option><option value="normals">Centroids &amp; normals</option><option value="coordination">Coordination distribution</option></select></label><a id="contact-open" href="outputs/contact-detection/segmented-volume.html" target="_blank" rel="noopener">Open view</a></div>
+      <iframe id="contact-frame" title="Rotatable 3D view of the original segmented TIFF showing individually colored spherical particles" src="outputs/contact-detection/segmented-volume.html" loading="lazy"></iframe>
+      <img id="contact-image" class="contact-preview" src="outputs/contact-detection/contact-voxels.png" alt="Contact voxel patch highlighted in red between two particle surfaces." hidden>
+      <div class="panel-caption"><p id="contact-caption" aria-live="polite">Original segmented TIFF: colors distinguish particle labels. Drag to rotate and zoom. Surface display samples every third voxel; contact detection uses the full image.</p><p id="contact-summary">125 particles; 300 contacts; mean coordination 4.80.</p><p>All views come from the supplied labeled TIFF. Use calibrated voxel spacing for physical distances; geometric proximity does not measure force.</p><a id="contact-save" href="outputs/contact-detection/segmented-volume.png" download>Save PNG</a><a href="outputs/contact-detection/contacts_summary.csv" download>Contact table CSV</a><a href="ContactDetection3D/out/Validation_contact_algorithm.pdf">Validation slides (PDF)</a></div>
+    </div>
+  </article>
   <article class="tool pore-tool" id="pore-space">
     <div class="tool-copy">
       <span class="tool-number">06 / PORE-SPACE SEGMENTATION</span>
       <h3>Resolve the<br>void architecture.</h3>
-      <p>Partition binary 3D pore space into pore bodies and throats. Measure their equivalent-sphere sizes and principal orientations with one MATLAB implementation and two reference examples.</p>
+      <p>Resolve pore space from segmented 3D images of real granular packings by partitioning it into pore bodies and throats. Characterize the void architecture through scalar measures such as volumes and equivalent-sphere sizes, directional measures such as principal orientations, and tensorial measures derived from voxel-center second moments.</p>
+      <div class="use-case"><span>FROM VALIDATION TO REAL GRANULAR PACKINGS</span><p><strong>SCP and VEP are reference examples for establishing validation.</strong> Apply the same workflow to a binary pore-space volume segmented from a real granular packing 3D image to resolve its pore space and corresponding scalar, directional, and tensorial measures.</p></div>
       <p>Adapted from <a href="https://github.com/Nimisha-Roy/Pore_Space_Architecture" target="_blank" rel="noopener">Nimisha Roy's Pore Space Architecture</a> and the framework of Roy, Frost &amp; Roozbahani (2023). Revised geometric refinement by <strong>Srinivas Vivek Bokkisa</strong>, <cite>Multiscale Assessment of fabric in granular soils</cite>, submitted thesis, unpublished (Chapter 8 and Appendix 8B).</p>
       <div class="use-case"><span>REFINEMENT DEVELOPED IN THIS THESIS</span><p>Local plane transforms, adaptive concave boundaries, periodic spatial smoothing, curvature and bulge-based feature selection, and two-pass voxel relabeling.</p><a href="PoreSpaceSegmentation3D/docs/MODIFICATIONS.md">Read the modification map and validation limits ?</a></div>
-      <div class="tags"><span>MATLAB</span><span>BINARY 3D VOLUMES</span><span>VEP + SCP EXAMPLES</span></div>
+      <div class="tags"><span>MATLAB</span><span>BINARY 3D VOLUMES</span><span>REAL GRANULAR PACKINGS</span><span>SCP + VEP VALIDATION EXAMPLES</span></div>
       <div class="tool-links"><a href="downloads/pore-space-segmentation3d.zip" download>Download code + two examples</a><a href="PoreSpaceSegmentation3D/README.md">Usage &amp; methods</a><a href="PoreSpaceSegmentation3D/poreSpaceSegmentation3D.m">View shared code</a><a href="PoreSpaceSegmentation3D/REFERENCES.bib" download>Citations</a></div>
     </div>
     <div class="visual-panel pore-panel">

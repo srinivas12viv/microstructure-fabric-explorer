@@ -94,16 +94,20 @@ def write_minkowski_bundle():
 
 
 def refresh_full_bundle():
+    from build_pore_showcase import public_files
+    pore_release = {path.relative_to(ROOT).parts for path in public_files()}
     downloads=ROOT/'downloads'; downloads.mkdir(exist_ok=True)
     with ZipFile(downloads/'microstructure-fabric-explorer.zip','w',ZIP_DEFLATED) as bundle:
-        for name in ['force-chain','polar-histogram','spherical-histogram','contact-detection','minkowski3d']:
+        for name in ['force-chain','polar-histogram','spherical-histogram','contact-detection','minkowski3d','pore-space-segmentation3d']:
             source=downloads/f'{name}.zip'
             if source.exists():
                 bundle.write(source,f'downloads/{name}.zip')
         for path in sorted(ROOT.rglob('*')):
             parts=path.relative_to(ROOT).parts
+            if parts[0] == 'PoreSpaceSegmentation3D' and parts not in pore_release:
+                continue
             if path.is_file() and not any(p in {'downloads','__pycache__','.git','.venv'} for p in parts):
-                if parts[:2] != ('Minkowski3D','outputs'):
+                if parts[:2] not in {('Minkowski3D','outputs'), ('PoreSpaceSegmentation3D','outputs'), ('originals','pore-space-submitted')}:
                     bundle.write(path,path.relative_to(ROOT))
 
 

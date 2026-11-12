@@ -1,6 +1,6 @@
 # Microstructure & Fabric Explorer
 
-Five Python tools for exploring contact networks, force transmission, and directional fabric from simulation or experimental data. The supplied examples come from discrete element method (DEM) simulations; experimental inputs must follow the same file schemas and supply the quantities required by each tool. ContactDetection3D also estimates geometric contacts from an already segmented, integer-labeled 3D TIFF. Image segmentation and force inference remain outside its scope. Open **index.html** to explore the gallery, locally and offline. Keep `outputs/` beside it: the interactive exports share a local Plotly bundle. 3D interaction requires WebGL. No web server or account is needed.
+Six tools (five Python modules and one MATLAB module) for exploring contact networks, force transmission, and directional fabric from simulation or experimental data. The supplied examples come from discrete element method (DEM) simulations; experimental inputs must follow the same file schemas and supply the quantities required by each tool. ContactDetection3D also estimates geometric contacts from an already segmented, integer-labeled 3D TIFF. PoreSpaceSegmentation3D partitions an already binary pore mask using MATLAB. Grayscale segmentation and force inference remain outside the toolkit?s scope. Open **index.html** to explore the gallery, locally and offline. Keep `outputs/` beside it: the interactive exports share a local Plotly bundle. 3D interaction requires WebGL. No web server or account is needed.
 
 Suggested GitHub repository name: `microstructure-fabric-explorer`.
 
@@ -10,8 +10,8 @@ Suggested GitHub repository name: `microstructure-fabric-explorer`.
 positions and radii -> weighted periodic Voronoi cells -> Minkowski moments ->
 local elongation and assembly fabric. Its clean folder contains code, one
 10,000-particle sample, and its sheared periodic domain. No YADE installation
-is required. The gallery includes four static views and an interactive explorer. Rebuild all
-five modules with `python build_gallery.py`, or regenerate only the Minkowski
+is required. The gallery includes four static views and an interactive explorer. Rebuild the
+gallery with `python build_gallery.py`, or regenerate only the Minkowski
 webpage figures and download bundles with:
 
 ```sh
@@ -24,12 +24,43 @@ module also runs independently with `python Minkowski3D/run_example.py`; its
 local results are excluded from Git.
 The `Minkowski3D` folder can also be copied and used as a standalone toolkit.
 
+## Pore-space segmentation (MATLAB)
+
+[PoreSpaceSegmentation3D](PoreSpaceSegmentation3D/README.md) adds a shared MATLAB
+implementation and two examples: an ellipsoidal void lattice (VEP) and simple
+cubic packing (SCP), each with its input and selected figures.
+It adapts [Nimisha Roy?s MIT-licensed software](https://github.com/Nimisha-Roy/Pore_Space_Architecture)
+with thesis refinements by Srinivas Vivek Bokkisa.
+See the [modification map](PoreSpaceSegmentation3D/docs/MODIFICATIONS.md).
+
+From MATLAB, with that module folder on the path:
+
+```matlab
+run_example("VEP")
+run_example("SCP")
+```
+
+MATLAB computes new segmentation; Python renders the supplied thesis figures
+and packages downloads. The gallery does not run MATLAB. Rebuild this module?s
+presentation independently with:
+
+```sh
+python -m pip install -r requirements-pore-showcase.txt
+python build_pore_showcase.py
+```
+
+Consolidated MATLAB execution
+remains unverified because the installed R2024b license server was unavailable.
+Full original submissions are preserved locally in `originals/pore-space-submitted/`
+and excluded from curated downloads.
+
 ## Setup and reproduce
 
 Python 3.10+ is recommended. From this folder:
 
 ```sh
 python -m pip install -r requirements.txt
+python -m pip install -r requirements-pore-showcase.txt
 python build_gallery.py
 python -m unittest discover -s tests -v
 ```

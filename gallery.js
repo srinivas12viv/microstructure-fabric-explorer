@@ -105,3 +105,52 @@ if (minkowski) {
   byId('minkowski-ed').textContent = minkowski.Ed.toFixed(4);
   byId('minkowski-ad').textContent = minkowski.orientation_all_cells.Ad.toFixed(4);
 }
+
+const poreViews = {
+  VEP: {
+    geometry: 'Prescribed ellipsoidal void lattice with short and long connections.',
+    workflow: 'The five-stage framework: initial body/throat assignment followed by geometric refinement.',
+    'refinement-short': 'Supplied Step 5 illustration for shortening initially overpredicted short throats.',
+    'refinement-long': 'Supplied Step 5 illustration for extending initially underpredicted long throats.',
+    sizes: 'Supplied size distributions for the ellipsoidal lattice; inspect the figure axes for units.',
+    orientations: 'Supplied body and throat centers and principal directions in the ellipsoidal lattice.',
+    sphericity: 'Supplied thesis sphericity distributions. Sphericity is not recalculated by the consolidated module.'
+  },
+  SCP: {
+    segmentation: 'Supplied simple cubic packing illustration showing segmented pore bodies and throats.',
+    sizes: 'Supplied size distributions for the simple cubic packing analysis region.',
+    sphericity: 'Supplied thesis sphericity distributions. Sphericity is not recalculated by the consolidated module.'
+  }
+};
+const poreLabels = {
+  geometry: 'Prescribed geometry', workflow: 'Five-stage workflow',
+  'refinement-short': 'Short-throat refinement', 'refinement-long': 'Long-throat refinement',
+  sizes: 'Size distributions', orientations: 'Principal orientations', segmentation: 'Segmented volume',
+  sphericity: 'Sphericity distributions'
+};
+function updatePoreExample() {
+  const example = byId('pore-example').value;
+  const previous = byId('pore-view').value;
+  const select = byId('pore-view');
+  select.replaceChildren(...Object.keys(poreViews[example]).map(key => new Option(poreLabels[key], key)));
+  if (Object.hasOwn(poreViews[example], previous)) select.value = previous;
+  updatePoreView();
+}
+function updatePoreView() {
+  const example = byId('pore-example').value;
+  const key = byId('pore-view').value;
+  const image = `outputs/pore-space/${example.toLowerCase()}/${key}.png`;
+  const base = `PoreSpaceSegmentation3D/examples/${example}/`;
+  byId('pore-image').src = image;
+  byId('pore-image').alt = poreViews[example][key];
+  byId('pore-caption').textContent = poreViews[example][key];
+  byId('pore-open').href = `${base}figures/${key}.pdf`;
+  byId('pore-save').href = image;
+  byId('pore-example-doc').href = `${base}README.md`;
+  byId('pore-reference').textContent = example === 'VEP'
+    ? 'Example input: 289 × 289 × 289 binary voxels. Selected figures illustrate the ellipsoidal lattice.'
+    : 'Example input: 196 × 196 × 196 binary voxels. Selected figures illustrate the simple cubic packing.';
+}
+byId('pore-example').addEventListener('change', updatePoreExample);
+byId('pore-view').addEventListener('change', updatePoreView);
+updatePoreExample();

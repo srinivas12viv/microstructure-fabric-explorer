@@ -1,0 +1,5 @@
+# Optional Python dependencies for rebuilding the website's supplied figures.
+# MATLAB segmentation does not use Python.
+numpy>=1.24,<3
+scipy>=1.10,<2
+PyMuPDF>=1.24,<3

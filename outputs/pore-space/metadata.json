@@ -1,0 +1,23 @@
+{
+  "runtime": "MATLAB",
+  "presentation_source": "supplied thesis figures",
+  "segmentation_regenerated": false,
+  "examples": {
+    "VEP": {
+      "shape_xyz": [
+        289,
+        289,
+        289
+      ],
+      "binary_input": true
+    },
+    "SCP": {
+      "shape_xyz": [
+        196,
+        196,
+        196
+      ],
+      "binary_input": true
+    }
+  }
+}

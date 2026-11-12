@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from ContactDetection3D.main import run as run_contacts
 from ContactDetection3D.config import Config
 from build_minkowski_showcase import build as build_minkowski, refresh_full_bundle
+from build_pore_showcase import build as build_pore_space
 from demviz import (ROOT, load_normals, polar_stats, spherical_stats, force_plot,
                     polar_figure, spherical_figure, write_plot)
 
@@ -44,6 +45,7 @@ def build():
             delimiter=',',header='azimuth_start_rad,azimuth_end_rad,cos_theta_start,cos_theta_end,antipodal_count',comments='')
         metadata[dataset]['spherical_observations'] = int(counts.sum())
     metadata['minkowski'] = build_minkowski(update_gallery=False, package=False)
+    metadata['pore_space'] = build_pore_space(update_gallery=False, package=False)
     (output/'metadata.json').write_text(json.dumps(metadata,indent=2),encoding='utf-8')
     (ROOT/'gallery-data.js').write_text('window.MFE_DATA = '+json.dumps(metadata)+';\n',encoding='utf-8')
     downloads = ROOT/'downloads'
@@ -62,7 +64,7 @@ def build():
                         bundle.write(path,path.relative_to(ROOT))
     refresh_full_bundle()
     print(json.dumps(metadata,indent=2))
-    print('Built gallery outputs and six download bundles.')
+    print('Built gallery outputs and seven download bundles.')
 
 
 if __name__ == '__main__':
